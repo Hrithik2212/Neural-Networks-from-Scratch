@@ -23,7 +23,7 @@ def simple_neuron(inp,w,b=0):
         return out
     except :
         if len(inp) != len(w):
-            print("Lenght of Inputs and Weights are to be the same")
+            print("Error : Lenght of Inputs and Weights are to be the same")
            
 
 print(simple_neuron(inputs,weights,bias))
