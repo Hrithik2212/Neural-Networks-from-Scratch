@@ -128,3 +128,7 @@ class DNN_2layers:
             optimizer.update_params(dense2)
         return predictions
 
+dnn = DNN_2layers().train(X,y,20001,2.47)
+
+
+## Highest Accuracy Achieved - 87.3333333 at 2.45 learning rate
