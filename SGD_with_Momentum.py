@@ -86,20 +86,32 @@ class Activation_Softmax_Loss_CategoricalCrossentropy:
         self.dinputs = self.dinputs / samples
 
 class Optimizer_SGD:
-    def __init__(self,learning_rate=.85,decay=0):
+    def __init__(self,learning_rate=1,decay=0,momentum=0.):
         self.learning_rate = learning_rate
         self.current_learning_rate = learning_rate
         self.decay = decay
         self.iterations = 0
+        self.momentum = momentum
 
     def pre_update_params(self):
         if self.decay:
             self.current_learning_rate  = self.learning_rate*(1./(1.+self.decay*self.iterations)) 
     
     def update_params(self,layer):
-        layer.weights += -self.learning_rate * layer.dweights
-        layer.biases += -self.learning_rate * layer.dbiases
-    
+        if self.momentum:
+            if not hasattr(layer,'weight_momentums'):
+                layer.weight_momentums = np.zeros_like(layer.weights)
+                layer.bias_momentums = np.zeros_like(layer.biases)
+            weight_update = self.momentum*layer.weight_momentums - self.current_learning_rate*layer.dweights
+
+            bias_update = self.momentum*layer.bias_momentums - self.current_learning_rate*layer.dbiases
+            layer.bias_momentums = bias_update
+        else:
+            layer.weights += -self.learning_rate * layer.dweights
+            layer.biases += -self.learning_rate * layer.dbiases
+        layer.weights += weight_update
+        layer.biases += bias_update
+
     def post_update_params(self):
         self.iterations +=1
 
@@ -107,13 +119,13 @@ X , y = datasets.spiral_data(100,3)
 
 # Initialising the Neural Network class
 class DNN_2layers:
-    def train(self,X,y,epochs,learning_rate=1,decay=1e-2):
+    def train(self,X,y,epochs,learning_rate=1,decay=1e-2,momentum = 0.5):
         # Intialisation of the Layers 
         dense1 = Layer_Dense(2,64)
         activation1 = Activation_Relu()
         dense2 = Layer_Dense(64,3)
         loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
-        optimizer = Optimizer_SGD(learning_rate,decay)
+        optimizer = Optimizer_SGD(learning_rate,decay,momentum)
 
         # Training
         for epoch in range(epochs):
@@ -144,4 +156,4 @@ class DNN_2layers:
             optimizer.post_update_params()
         return predictions
 
-dnn = DNN_2layers().train(X,y,20001,2.8,1e-3)
+dnn = DNN_2layers().train(X,y,20001,2.5,1e-3,0.9)
